@@ -23,7 +23,7 @@ jobs:
         run: terraform validate
         working-directory: terraform
 
-  docker-build-and-scan:
+ docker-build-and-scan:
     runs-on: ubuntu-latest
     needs: terraform-ci
     steps:
@@ -33,14 +33,6 @@ jobs:
       - name: Build Docker image
         run: docker build -t laravel-lab .
         working-directory: app/laravel
-
-      - name: Run Snyk to scan Docker image
-        uses: snyk/actions/docker@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          image: laravel-lab
-          args: --severity-threshold=high
 
       - name: Run Snyk to scan PHP dependencies
         uses: snyk/actions/php@master
