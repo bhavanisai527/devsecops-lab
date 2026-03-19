@@ -1,0 +1,57 @@
+name: Terraform CI (Free Tier Friendly)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  terraform-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: terraform
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: terraform-ci
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t laravel-lab .
+        working-directory: app/laravel
+
+  snyk-scan:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk to scan Docker image
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: laravel-lab
+          args: --severity-threshold=high
+
+      - name: Run Snyk to scan PHP dependencies
+        uses: snyk/actions/php@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --file=app/laravel/composer.lock
