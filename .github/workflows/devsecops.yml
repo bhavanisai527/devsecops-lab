@@ -23,7 +23,7 @@ jobs:
         run: terraform validate
         working-directory: terraform
 
- docker-build-and-scan:
+  docker-build-and-scan:
     runs-on: ubuntu-latest
     needs: terraform-ci
     steps:
