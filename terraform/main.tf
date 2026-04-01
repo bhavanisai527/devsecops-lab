@@ -50,6 +50,13 @@ resource "aws_iam_role_policy_attachment" "ecr_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+# allow EC2 to receive commands from SSM
+
+resource "aws_iam_role_policy_attachment" "ssm_policy" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # EC2 needs a profile wrapper to use the IAM role
 
 resource "aws_iam_instance_profile" "ec2_profile" {
@@ -98,6 +105,14 @@ resource "aws_instance" "devsecops_lab" {
 
   user_data = <<-EOF
     #!/bin/bash
+    # install and start SSM agent so pipeline can send commands to this EC2
+
+    yum install -y amazon-ssm-agent
+    systemctl start amazon-ssm-agent
+    systemctl enable amazon-ssm-agent
+
+    #install docker
+
     yum update -y
     yum install -y docker
     systemctl start docker
